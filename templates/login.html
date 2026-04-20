@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Finance Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body class="bg-gradient">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <div class="display-4 text-primary mb-2">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <h1 class="h3 fw-bold">Finance Manager</h1>
+                            <p class="text-muted">Manage your finances with ease</p>
+                        </div>
+
+                        {% if messages %}
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <form method="POST" action="{% url 'login' %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control form-control-lg" id="username" 
+                                       name="username" placeholder="Enter your username" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control form-control-lg" id="password" 
+                                       name="password" placeholder="Enter your password" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <p class="text-center text-muted mb-0">
+                            Don't have an account? 
+                            <a href="{% url 'register' %}" class="text-primary fw-bold">Register here</a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center text-muted">
+                    <small>Secure • Free • Easy to Use</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

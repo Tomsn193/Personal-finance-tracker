@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Category - Finance Manager{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h4 class="mb-0">Add New Category</h4>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label fw-bold">Category Name</label>
+                            <input type="text" class="form-control form-control-lg" id="name" 
+                                   name="name" placeholder="e.g., Groceries" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="type" class="form-label fw-bold">Type</label>
+                            <select class="form-select form-select-lg" id="type" name="type" required>
+                                <option value="">Select category type</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="color" class="form-label fw-bold">Color</label>
+                            <div class="input-group input-group-lg">
+                                <input type="color" class="form-control" id="color" 
+                                       name="color" value="#3498db" style="max-width: 60px;">
+                                <input type="text" class="form-control" id="colorHex" 
+                                       value="#3498db" placeholder="#3498db" readonly>
+                            </div>
+                            <small class="text-muted">Choose a color for visual organization</small>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'categories' %}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus"></i> Add Category
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('color').addEventListener('change', function() {
+    document.getElementById('colorHex').value = this.value;
+});
+</script>
+{% endblock %}

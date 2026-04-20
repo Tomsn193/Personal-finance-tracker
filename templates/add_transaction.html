@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Transaction - Finance Manager{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h4 class="mb-0">Add New Transaction</h4>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST" action="{% url 'add_transaction' %}">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="type" class="form-label fw-bold">Type</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="type" id="expense" 
+                                               value="expense" checked>
+                                        <label class="form-check-label" for="expense">
+                                            <i class="fas fa-arrow-down text-danger"></i> Expense
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="type" id="income" 
+                                               value="income">
+                                        <label class="form-check-label" for="income">
+                                            <i class="fas fa-arrow-up text-success"></i> Income
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="amount" class="form-label fw-bold">Amount</label>
+                            <input type="number" class="form-control form-control-lg" id="amount" 
+                                   name="amount" step="0.01" placeholder="0.00" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label fw-bold">Category</label>
+                            <select class="form-select form-select-lg" id="category" name="category" required>
+                                <option value="">Select a category</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat.id }}" data-type="{{ cat.category_type }}">
+                                        {{ cat.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-bold">Description</label>
+                            <input type="text" class="form-control form-control-lg" id="description" 
+                                   name="description" placeholder="What was this transaction for?">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="date" class="form-label fw-bold">Date & Time</label>
+                            <input type="datetime-local" class="form-control form-control-lg" id="date" 
+                                   name="date">
+                            <small class="text-muted">Leave empty for today</small>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'transactions_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check"></i> Save Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateCategories() {
+    const type = document.querySelector('input[name="type"]:checked').value;
+    const categorySelect = document.getElementById('category');
+    const allOptions = categorySelect.querySelectorAll('option[data-type]');
+    
+    let firstVisible = null;
+    
+    // Show/hide options based on type
+    allOptions.forEach(option => {
+        const optionType = option.getAttribute('data-type');
+        if (optionType === type) {
+            option.style.display = 'block';
+            if (!firstVisible) {
+                firstVisible = option.value;
+            }
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Auto-select first visible option
+    if (firstVisible) {
+        categorySelect.value = firstVisible;
+    } else {
+        categorySelect.value = '';
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Set date
+    const now = new Date();
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.value = now.toISOString().slice(0, 16);
+    }
+    
+    // Initialize categories
+    updateCategories();
+    
+    // Add event listeners
+    document.querySelectorAll('input[name="type"]').forEach(radio => {
+        radio.addEventListener('change', updateCategories);
+    });
+});
+</script>
+{% endblock %}

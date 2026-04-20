@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Transaction - Finance Manager{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h4 class="mb-0">Edit Transaction</h4>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="type" class="form-label fw-bold">Type</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="type" id="expense" 
+                                               value="expense" {% if transaction.transaction_type == 'expense' %}checked{% endif %}>
+                                        <label class="form-check-label" for="expense">
+                                            <i class="fas fa-arrow-down text-danger"></i> Expense
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="type" id="income" 
+                                               value="income" {% if transaction.transaction_type == 'income' %}checked{% endif %}>
+                                        <label class="form-check-label" for="income">
+                                            <i class="fas fa-arrow-up text-success"></i> Income
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="amount" class="form-label fw-bold">Amount</label>
+                            <input type="number" class="form-control form-control-lg" id="amount" 
+                                   name="amount" step="0.01" value="{{ transaction.amount }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label fw-bold">Category</label>
+                            <select class="form-select form-select-lg" id="category" name="category" required>
+                                <option value="">Select a category</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if cat.id == transaction.category.id %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-bold">Description</label>
+                            <input type="text" class="form-control form-control-lg" id="description" 
+                                   name="description" value="{{ transaction.description }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="date" class="form-label fw-bold">Date & Time</label>
+                            <input type="datetime-local" class="form-control form-control-lg" id="date" 
+                                   name="date" value="{{ transaction.date|date:'Y-m-dTH:i' }}">
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'transactions_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Update Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
