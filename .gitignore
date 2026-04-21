@@ -59,3 +59,4 @@ htmlcov/
 # Project specific
 /migrations/
 !migrations/__init__.py
+COMPLETE_FRESH_START.md
