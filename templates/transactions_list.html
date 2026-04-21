@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency_filters %}
 {% load static %}
 
 {% block title %}Transactions - Finance Manager{% endblock %}
@@ -89,8 +90,7 @@
                                     </td>
                                     <td class="text-end fw-bold">
                                         <span class="{% if trans.transaction_type == 'income' %}text-success{% else %}text-danger{% endif %}">
-                                            {% if trans.transaction_type == 'income' %}+{% else %}-{% endif %}${{ trans.amount|floatformat:2 }}
-                                        </span>
+                                            {% if trans.transaction_type == 'income' %}+{% else %}-{% endif %}{{ trans.amount|currency:currency }}                                        </span>
                                     </td>
                                     <td class="text-end">
                                         <a href="{% url 'edit_transaction' trans.id %}" class="btn btn-sm btn-warning">

@@ -1,3 +1,5 @@
+from locale import currency
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -23,6 +25,7 @@ def register(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
+        currency = request.POST.get('currency', 'USD')
         
         if password != password2:
             messages.error(request, 'Passwords do not match')
@@ -34,9 +37,9 @@ def register(request):
         
         # Create user
         user = User.objects.create_user(username=username, email=email, password=password)
-        
-        # Profile and default categories
-        # Profile.objects.create(user=user)
+
+        user.profile.currency = currency
+        user.profile.save()
         
         income_cat = Category.objects.create(
             user=user,
@@ -157,6 +160,7 @@ def dashboard(request):
         'current_year': int(year),
         'months': range(1, 13),
         'years': range(now.year - 3, now.year + 1),
+        'currency': profile.currency,
     }
     
     return render(request, 'dashboard.html', context)
@@ -168,10 +172,11 @@ def transactions_list(request):
     """List all transactions"""
     transactions = Transaction.objects.filter(user=request.user).order_by('-date')
     categories = Category.objects.filter(user=request.user)
-    
+    profile = request.user.profile
     context = {
         'transactions': transactions,
         'categories': categories,
+        'currency': profile.currency,
     }
     
     return render(request, 'transactions_list.html', context)
@@ -336,13 +341,14 @@ def budgets(request):
         year=year,
         month=month
     )
-    
+    profile = request.user.profile
     context = {
         'budgets': budgets,
         'current_month': int(month),
         'current_year': int(year),
         'months': range(1, 13),
         'years': range(now.year - 1, now.year + 2),
+        'currency': profile.currency,
     }
     
     return render(request, 'budgets.html', context)
@@ -442,7 +448,7 @@ def reports(request):
         key=lambda x: x[1],
         reverse=True
     ))
-    
+    profile = request.user.profile
     context = {
         'year': year,
         'month': month,
@@ -452,6 +458,7 @@ def reports(request):
         'spending_by_category': spending_by_category,
         'years': range(now.year - 2, now.year + 1),
         'months': range(1, 13),
+        'currency': profile.currency,
     }
     
     return render(request, 'reports.html', context)

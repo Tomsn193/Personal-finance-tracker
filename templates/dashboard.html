@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency_filters %}
 {% load static %}
 
 {% block title %}Dashboard - Finance Manager{% endblock %}
@@ -39,7 +40,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="text-muted mb-1">Income</h6>
-                            <h3 class="text-success mb-0">${{ income|floatformat:2 }}</h3>
+                            <h3 class="text-success mb-0">{{ income|currency:currency }}</h3>
                         </div>
                         <i class="fas fa-arrow-up text-success fa-2x opacity-50"></i>
                     </div>
@@ -53,7 +54,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="text-muted mb-1">Expenses</h6>
-                            <h3 class="text-danger mb-0">${{ expenses|floatformat:2 }}</h3>
+                            <h3 class="text-danger mb-0">{{ expenses|currency:currency }}</h3>
                         </div>
                         <i class="fas fa-arrow-down text-danger fa-2x opacity-50"></i>
                     </div>
@@ -68,7 +69,7 @@
                         <div>
                             <h6 class="text-muted mb-1">Net Balance</h6>
                             <h3 class="{% if balance >= 0 %}text-success{% else %}text-danger{% endif %} mb-0">
-                                ${{ balance|floatformat:2 }}
+                                {{ balance|currency:currency }}
                             </h3>
                         </div>
                         <i class="fas fa-balance-scale fa-2x opacity-50"></i>
@@ -113,7 +114,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
                                 <small class="fw-bold">{{ budget.category.name }}</small>
-                                <small class="text-muted">${{ budget.get_spent|floatformat:2 }} / ${{ budget.limit|floatformat:2 }}</small>
+                                <small class="text-muted">{{ budget.get_spent|currency:currency }} / {{ budget.limit|currency:currency }}</small>
                             </div>
                             <div class="progress" style="height: 8px;">
                                 <div class="progress-bar {% if budget.is_over_budget %}bg-danger{% else %}bg-success{% endif %}" 
@@ -169,8 +170,7 @@
                                     <td>{{ trans.description }}</td>
                                     <td class="text-end">
                                         <span class="{% if trans.transaction_type == 'income' %}text-success{% else %}text-danger{% endif %}">
-                                            {% if trans.transaction_type == 'income' %}+{% else %}-{% endif %}${{ trans.amount|floatformat:2 }}
-                                        </span>
+                                            {% if trans.transaction_type == 'income' %}+{% else %}-{% endif %}{{ trans.amount|currency:currency }}                                        </span>
                                     </td>
                                 </tr>
                                 {% endfor %}
