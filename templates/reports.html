@@ -13,7 +13,29 @@
                 <h2>Financial Reports</h2>
             </div>
             
+            <!-- Period Selector -->
+            <div class="mb-3">
+                <label class="form-label d-block mb-2">View Period:</label>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="?period=month&month={{ month }}&year={{ year }}" 
+                       class="btn btn-outline-primary {% if period == 'month' %}active{% endif %}">
+                        This Month
+                    </a>
+                    <a href="?period=year&year={{ year }}" 
+                       class="btn btn-outline-primary {% if period == 'year' %}active{% endif %}">
+                        This Year
+                    </a>
+                    <a href="?period=all" 
+                       class="btn btn-outline-primary {% if period == 'all' %}active{% endif %}">
+                        All Time
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Month/Year Selector (only show for month/year views) -->
+            {% if period != 'all' %}
             <form method="GET" class="row g-2 align-items-end">
+                <input type="hidden" name="period" value="{{ period }}">
                 <div class="col-auto">
                     <label for="month" class="form-label">Month</label>
                     <select class="form-select" id="month" name="month" onchange="this.form.submit()">
@@ -33,6 +55,11 @@
                     </select>
                 </div>
             </form>
+            {% else %}
+            <div class="text-muted small">
+                <i class="fas fa-info-circle"></i> Showing all transactions
+            </div>
+            {% endif %}
         </div>
     </div>
 

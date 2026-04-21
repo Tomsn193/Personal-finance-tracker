@@ -101,6 +101,8 @@ def dashboard(request):
     """Main dashboard"""
     # Get current month and year
     now = timezone.now()
+    period = request.GET.get('period', 'month')  # month, year, or all
+    
     try:
         selected_year = int(request.GET.get('year', now.year))
         selected_month = int(request.GET.get('month', now.month))
@@ -111,12 +113,25 @@ def dashboard(request):
     # Create a list of date objects for the dropdown
     months_list = [date(selected_year, m, 1) for m in range(1, 13)]
     
-    # Get all transactions for current month
-    transactions = Transaction.objects.filter(
-        user=request.user,
-        date__year=selected_year,
-        date__month=selected_month
-    ).order_by('-date')
+    # Get transactions based on selected period
+    if period == 'month':
+        transactions = Transaction.objects.filter(
+            user=request.user,
+            date__year=selected_year,
+            date__month=selected_month
+        ).order_by('-date')
+        period_label = f"{months_list[selected_month - 1].strftime('%B %Y')}"
+    elif period == 'year':
+        transactions = Transaction.objects.filter(
+            user=request.user,
+            date__year=selected_year
+        ).order_by('-date')
+        period_label = f"{selected_year}"
+    else:  # all
+        transactions = Transaction.objects.filter(
+            user=request.user
+        ).order_by('-date')
+        period_label = "All Time"
     
     # Calculate statistics
     income = transactions.filter(transaction_type='income').aggregate(
@@ -167,6 +182,8 @@ def dashboard(request):
         'current_year': selected_year,
         'months': months_list,
         'years': range(now.year - 3, now.year + 1),
+        'period': period,
+        'period_label': period_label,
     }
     
     return render(request, 'dashboard.html', context)
@@ -609,6 +626,7 @@ def delete_budget(request, pk):
 def reports(request):
     """Financial reports"""
     now = timezone.now()
+    period = request.GET.get('period', 'month')  # month, year, or all
     
     # Parse year and month with error handling
     try:
@@ -618,12 +636,25 @@ def reports(request):
         year = now.year
         month = now.month
     
-    # Monthly summary
-    transactions = Transaction.objects.filter(
-        user=request.user,
-        date__year=year,
-        date__month=month
-    )
+    # Get transactions based on selected period
+    if period == 'month':
+        transactions = Transaction.objects.filter(
+            user=request.user,
+            date__year=year,
+            date__month=month
+        )
+        period_label = f"{date(year, month, 1).strftime('%B %Y')}"
+    elif period == 'year':
+        transactions = Transaction.objects.filter(
+            user=request.user,
+            date__year=year
+        )
+        period_label = f"{year}"
+    else:  # all
+        transactions = Transaction.objects.filter(
+            user=request.user
+        )
+        period_label = "All Time"
     
     income = transactions.filter(transaction_type='income').aggregate(
         total=Sum('amount')
@@ -666,6 +697,8 @@ def reports(request):
         'savings_rate': round(savings_rate, 1),
         'years': range(now.year - 2, now.year + 1),
         'months': range(1, 13),
+        'period': period,
+        'period_label': period_label,
     }
     
     return render(request, 'reports.html', context)
