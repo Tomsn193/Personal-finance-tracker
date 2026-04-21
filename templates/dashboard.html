@@ -14,7 +14,7 @@
                     <label for="month" class="form-label">Month</label>
                     <select class="form-select" id="month" name="month" onchange="this.form.submit()">
                         {% for m in months %}
-                        <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>
+                        <option value="{{ m.month }}" {% if m.month == current_month %}selected{% endif %}>
                             {{ m|date:"F" }}
                         </option>
                         {% endfor %}

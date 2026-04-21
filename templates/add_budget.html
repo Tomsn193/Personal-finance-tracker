@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Budget - Finance Manager{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Create Budget
+                    </h4>
+                </div>
+                <div class="card-body p-5">
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'add_budget' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label fw-bold">Category</label>
+                            <select class="form-select form-select-lg" id="category" name="category" required>
+                                <option value="">Select a category to budget for</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }} (Expense)</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Only expense categories available for budgeting</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="limit" class="form-label fw-bold">Monthly Budget Limit</label>
+                            <input type="number" 
+                                   class="form-control form-control-lg" 
+                                   id="limit" 
+                                   name="limit" 
+                                   step="0.01"
+                                   min="0.01"
+                                   max="9999999.99"
+                                   placeholder="1000.00" 
+                                   required>
+                            <small class="text-muted">How much can you spend on this category per month?</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="month" class="form-label fw-bold">Month</label>
+                                <select class="form-select form-select-lg" id="month" name="month" required>
+                                    {% for m in months %}
+                                    <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>
+                                        {{ m|stringformat:"02d" }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="year" class="form-label fw-bold">Year</label>
+                                <select class="form-select form-select-lg" id="year" name="year" required>
+                                    {% for y in years %}
+                                    <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'budgets' %}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Create Budget
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Sum
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from decimal import Decimal
 import json
 
@@ -101,14 +101,21 @@ def dashboard(request):
     """Main dashboard"""
     # Get current month and year
     now = timezone.now()
-    year = request.GET.get('year', now.year)
-    month = request.GET.get('month', now.month)
+    try:
+        selected_year = int(request.GET.get('year', now.year))
+        selected_month = int(request.GET.get('month', now.month))
+    except ValueError:
+        selected_year = now.year
+        selected_month = now.month
+
+    # Create a list of date objects for the dropdown
+    months_list = [date(selected_year, m, 1) for m in range(1, 13)]
     
     # Get all transactions for current month
     transactions = Transaction.objects.filter(
         user=request.user,
-        date__year=year,
-        date__month=month
+        date__year=selected_year,
+        date__month=selected_month
     ).order_by('-date')
     
     # Calculate statistics
@@ -136,8 +143,8 @@ def dashboard(request):
     # Get budgets
     budgets = Budget.objects.filter(
         user=request.user,
-        year=year,
-        month=month
+        year=selected_year,
+        month=selected_month
     )
     
     # Get profile
@@ -156,9 +163,9 @@ def dashboard(request):
         'recent_transactions': recent_transactions,
         'spending_by_category': spending_by_category,
         'budgets': budgets,
-        'current_month': int(month),
-        'current_year': int(year),
-        'months': range(1, 13),
+        'current_month': selected_month,
+        'current_year': selected_year,
+        'months': months_list,
         'years': range(now.year - 3, now.year + 1),
     }
     
@@ -169,7 +176,19 @@ def dashboard(request):
 @login_required(login_url='login')
 def transactions_list(request):
     """List all transactions"""
+    # Start with all user transactions
     transactions = Transaction.objects.filter(user=request.user).order_by('-date')
+    
+    # Filter by category if selected
+    category_id = request.GET.get('category')
+    if category_id:
+        transactions = transactions.filter(category_id=category_id)
+    
+    # Filter by type if selected
+    transaction_type = request.GET.get('type')
+    if transaction_type in ['income', 'expense']:
+        transactions = transactions.filter(transaction_type=transaction_type)
+    
     categories = Category.objects.filter(user=request.user)
     profile = request.user.profile
     
@@ -245,12 +264,12 @@ def add_transaction(request):
             # Parse date if provided
             if date_str:
                 try:
-                    date = datetime.fromisoformat(date_str)
+                    date_obj = datetime.fromisoformat(date_str)
                 except:
                     messages.error(request, 'Invalid date format')
                     return redirect('add_transaction')
             else:
-                date = timezone.now()
+                date_obj = timezone.now()
             
             # Create transaction
             transaction = Transaction.objects.create(
@@ -259,7 +278,7 @@ def add_transaction(request):
                 category=category,
                 description=description,
                 transaction_type=transaction_type,
-                date=date
+                date=date_obj
             )
             
             messages.success(request, 'Transaction added successfully!')
@@ -333,19 +352,19 @@ def edit_transaction(request, pk):
             # Parse date
             if date_str:
                 try:
-                    date = datetime.fromisoformat(date_str)
+                    date_obj = datetime.fromisoformat(date_str)
                 except:
                     messages.error(request, 'Invalid date format')
                     return redirect('edit_transaction', pk=pk)
             else:
-                date = timezone.now()
+                date_obj = timezone.now()
             
             # Update transaction
             transaction.amount = amount
             transaction.category = category
             transaction.description = description
             transaction.transaction_type = transaction_type
-            transaction.date = date
+            transaction.date = date_obj
             transaction.save()
             
             messages.success(request, 'Transaction updated successfully!')
@@ -445,23 +464,32 @@ def delete_category(request, pk):
 @login_required(login_url='login')
 def budgets(request):
     """List budgets"""
+    # Get current month and year
     now = timezone.now()
-    year = request.GET.get('year', now.year)
-    month = request.GET.get('month', now.month)
+    try:
+        selected_year = int(request.GET.get('year', now.year))
+        selected_month = int(request.GET.get('month', now.month))
+    except ValueError:
+        selected_year = now.year
+        selected_month = now.month
+
+    # Create a list of date objects for the dropdown
+    months_list = [date(selected_year, m, 1) for m in range(1, 13)]
+    
     profile = request.user.profile
     
     budgets = Budget.objects.filter(
         user=request.user,
-        year=year,
-        month=month
+        year=selected_year,
+        month=selected_month
     )
     
     context = {
         'budgets': budgets,
         'currency': profile.currency,
-        'current_month': int(month),
-        'current_year': int(year),
-        'months': range(1, 13),
+        'current_month': selected_month,
+        'current_year': selected_year,
+        'months': months_list,
         'years': range(now.year - 1, now.year + 2),
     }
     
@@ -471,32 +499,80 @@ def budgets(request):
 def add_budget(request):
     """Add new budget"""
     if request.method == 'POST':
-        category_id = request.POST.get('category')
-        limit = Decimal(request.POST.get('limit'))
-        year = int(request.POST.get('year'))
-        month = int(request.POST.get('month'))
+        try:
+            category_id = request.POST.get('category')
+            limit_str = request.POST.get('limit', '0').strip()
+            year_str = request.POST.get('year')
+            month_str = request.POST.get('month')
+            
+            # Validate category
+            if not category_id:
+                messages.error(request, 'Please select a category')
+                return redirect('add_budget')
+            
+            # Validate limit
+            if not limit_str:
+                messages.error(request, 'Please enter a budget limit')
+                return redirect('add_budget')
+            
+            try:
+                limit = Decimal(limit_str)
+            except:
+                messages.error(request, 'Invalid budget limit. Please enter a valid number.')
+                return redirect('add_budget')
+            
+            if limit <= 0:
+                messages.error(request, 'Budget limit must be greater than 0')
+                return redirect('add_budget')
+            
+            if limit > Decimal('9999999.99'):
+                messages.error(request, 'Budget limit is too large. Maximum is 9,999,999.99')
+                return redirect('add_budget')
+            
+            # Validate month and year
+            try:
+                month = int(month_str)
+                year = int(year_str)
+            except:
+                messages.error(request, 'Invalid month or year')
+                return redirect('add_budget')
+            
+            if month < 1 or month > 12:
+                messages.error(request, 'Invalid month')
+                return redirect('add_budget')
+            
+            # Get category
+            try:
+                category = Category.objects.get(id=category_id, user=request.user)
+            except Category.DoesNotExist:
+                messages.error(request, 'Selected category does not exist')
+                return redirect('add_budget')
+            
+            # Check if budget already exists
+            if Budget.objects.filter(
+                user=request.user,
+                category=category,
+                year=year,
+                month=month
+            ).exists():
+                messages.error(request, 'Budget for this category already exists for this month')
+                return redirect('add_budget')
+            
+            # Create budget
+            Budget.objects.create(
+                user=request.user,
+                category=category,
+                limit=limit,
+                year=year,
+                month=month
+            )
+            
+            messages.success(request, 'Budget added successfully!')
+            return redirect('budgets')
         
-        category = get_object_or_404(Category, id=category_id, user=request.user)
-        
-        if Budget.objects.filter(
-            user=request.user,
-            category=category,
-            year=year,
-            month=month
-        ).exists():
-            messages.error(request, 'Budget for this category already exists')
+        except Exception as e:
+            messages.error(request, f'An error occurred: {str(e)}')
             return redirect('add_budget')
-        
-        Budget.objects.create(
-            user=request.user,
-            category=category,
-            limit=limit,
-            year=year,
-            month=month
-        )
-        
-        messages.success(request, 'Budget added successfully!')
-        return redirect('budgets')
     
     now = timezone.now()
     categories = Category.objects.filter(user=request.user, category_type='expense')
@@ -505,6 +581,8 @@ def add_budget(request):
         'categories': categories,
         'years': range(now.year, now.year + 2),
         'months': range(1, 13),
+        'current_month': now.month,
+        'current_year': now.year,
     }
     
     return render(request, 'add_budget.html', context)
@@ -531,8 +609,14 @@ def delete_budget(request, pk):
 def reports(request):
     """Financial reports"""
     now = timezone.now()
-    year = int(request.GET.get('year', now.year))
-    month = int(request.GET.get('month', now.month))
+    
+    # Parse year and month with error handling
+    try:
+        year = int(request.GET.get('year', now.year))
+        month = int(request.GET.get('month', now.month))
+    except (ValueError, TypeError):
+        year = now.year
+        month = now.month
     
     # Monthly summary
     transactions = Transaction.objects.filter(
@@ -563,6 +647,12 @@ def reports(request):
         reverse=True
     ))
     
+    # Calculate percentages
+    if float(income) > 0:
+        savings_rate = (float(income) - float(expenses)) / float(income) * 100
+    else:
+        savings_rate = 0
+    
     profile = request.user.profile
     
     context = {
@@ -573,6 +663,7 @@ def reports(request):
         'net': float(income) - float(expenses),
         'spending_by_category': spending_by_category,
         'currency': profile.currency,
+        'savings_rate': round(savings_rate, 1),
         'years': range(now.year - 2, now.year + 1),
         'months': range(1, 13),
     }
