@@ -34,6 +34,9 @@
                                 </span>
                                 <small class="text-muted ms-2">Created: {{ cat.created_at|date:"M d, Y" }}</small>
                             </div>
+                            <a href="{% url 'delete_category' cat.id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
                         </div>
                         {% endfor %}
                     </div>

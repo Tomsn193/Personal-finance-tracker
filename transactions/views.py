@@ -1,5 +1,3 @@
-from locale import currency
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -37,10 +35,11 @@ def register(request):
         
         # Create user
         user = User.objects.create_user(username=username, email=email, password=password)
-
-        user.profile.currency = currency
-        user.profile.save()
         
+        # Create profile with selected currency
+        Profile.objects.create(user=user, currency=currency)
+        
+        # Create default categories
         income_cat = Category.objects.create(
             user=user,
             name='Salary',
@@ -66,7 +65,7 @@ def register(request):
                 color=color
             )
         
-        messages.success(request, 'Account created successfully! Please login.')
+        messages.success(request, f'Account created successfully with {currency} currency! Please login.')
         return redirect('login')
     
     return render(request, 'register.html')
@@ -149,6 +148,7 @@ def dashboard(request):
     
     context = {
         'profile': profile,
+        'currency': profile.currency,
         'balance': balance,
         'income': income,
         'expenses': expenses,
@@ -160,7 +160,6 @@ def dashboard(request):
         'current_year': int(year),
         'months': range(1, 13),
         'years': range(now.year - 3, now.year + 1),
-        'currency': profile.currency,
     }
     
     return render(request, 'dashboard.html', context)
@@ -173,6 +172,7 @@ def transactions_list(request):
     transactions = Transaction.objects.filter(user=request.user).order_by('-date')
     categories = Category.objects.filter(user=request.user)
     profile = request.user.profile
+    
     context = {
         'transactions': transactions,
         'categories': categories,
@@ -185,34 +185,90 @@ def transactions_list(request):
 def add_transaction(request):
     """Add new transaction"""
     if request.method == 'POST':
-        amount = Decimal(request.POST.get('amount', 0))
-        category_id = request.POST.get('category')
-        description = request.POST.get('description')
-        transaction_type = request.POST.get('type')
-        date_str = request.POST.get('date')
+        try:
+            # Get form data
+            amount_str = request.POST.get('amount', '0').strip()
+            category_id = request.POST.get('category')
+            description = request.POST.get('description', '').strip()
+            transaction_type = request.POST.get('type')
+            date_str = request.POST.get('date')
+            
+            # Validate amount exists and is not empty
+            if not amount_str:
+                messages.error(request, 'Please enter an amount')
+                return redirect('add_transaction')
+            
+            # Try to convert to Decimal
+            try:
+                amount = Decimal(amount_str)
+            except:
+                messages.error(request, 'Invalid amount format. Please enter a valid number.')
+                return redirect('add_transaction')
+            
+            # Validate amount is positive
+            if amount <= 0:
+                messages.error(request, 'Amount must be greater than 0')
+                return redirect('add_transaction')
+            
+            # Validate amount is not too large (max 9999999.99)
+            if amount > Decimal('9999999.99'):
+                messages.error(request, 'Amount is too large. Maximum is 9,999,999.99')
+                return redirect('add_transaction')
+            
+            # Validate amount has max 2 decimal places
+            if amount.as_tuple().exponent < -2:
+                messages.error(request, 'Amount can have maximum 2 decimal places')
+                return redirect('add_transaction')
+            
+            # Validate category is selected
+            if not category_id:
+                messages.error(request, 'Please select a category')
+                return redirect('add_transaction')
+            
+            # Validate transaction type
+            if not transaction_type or transaction_type not in ['income', 'expense']:
+                messages.error(request, 'Please select a valid transaction type')
+                return redirect('add_transaction')
+            
+            # Get category and validate it belongs to user
+            try:
+                category = Category.objects.get(id=category_id, user=request.user)
+            except Category.DoesNotExist:
+                messages.error(request, 'Selected category does not exist')
+                return redirect('add_transaction')
+            
+            # Validate category type matches transaction type
+            if category.category_type != transaction_type:
+                messages.error(request, f'Category must be an {transaction_type} category')
+                return redirect('add_transaction')
+            
+            # Parse date if provided
+            if date_str:
+                try:
+                    date = datetime.fromisoformat(date_str)
+                except:
+                    messages.error(request, 'Invalid date format')
+                    return redirect('add_transaction')
+            else:
+                date = timezone.now()
+            
+            # Create transaction
+            transaction = Transaction.objects.create(
+                user=request.user,
+                amount=amount,
+                category=category,
+                description=description,
+                transaction_type=transaction_type,
+                date=date
+            )
+            
+            messages.success(request, 'Transaction added successfully!')
+            return redirect('transactions_list')
         
-        if amount <= 0:
-            messages.error(request, 'Amount must be greater than 0')
+        except Exception as e:
+            # Catch any unexpected errors
+            messages.error(request, f'An error occurred: {str(e)}')
             return redirect('add_transaction')
-        
-        category = get_object_or_404(Category, id=category_id, user=request.user)
-        
-        if date_str:
-            date = datetime.fromisoformat(date_str)
-        else:
-            date = timezone.now()
-        
-        transaction = Transaction.objects.create(
-            user=request.user,
-            amount=amount,
-            category=category,
-            description=description,
-            transaction_type=transaction_type,
-            date=date
-        )
-        
-        messages.success(request, 'Transaction added successfully!')
-        return redirect('transactions_list')
     
     categories = Category.objects.filter(user=request.user)
     
@@ -228,19 +284,76 @@ def edit_transaction(request, pk):
     transaction = get_object_or_404(Transaction, id=pk, user=request.user)
     
     if request.method == 'POST':
-        transaction.amount = Decimal(request.POST.get('amount'))
-        transaction.category_id = request.POST.get('category')
-        transaction.description = request.POST.get('description')
-        transaction.transaction_type = request.POST.get('type')
+        try:
+            # Get form data
+            amount_str = request.POST.get('amount', '0').strip()
+            category_id = request.POST.get('category')
+            description = request.POST.get('description', '').strip()
+            transaction_type = request.POST.get('type')
+            date_str = request.POST.get('date')
+            
+            # Validate amount
+            if not amount_str:
+                messages.error(request, 'Please enter an amount')
+                return redirect('edit_transaction', pk=pk)
+            
+            try:
+                amount = Decimal(amount_str)
+            except:
+                messages.error(request, 'Invalid amount format. Please enter a valid number.')
+                return redirect('edit_transaction', pk=pk)
+            
+            if amount <= 0:
+                messages.error(request, 'Amount must be greater than 0')
+                return redirect('edit_transaction', pk=pk)
+            
+            if amount > Decimal('9999999.99'):
+                messages.error(request, 'Amount is too large. Maximum is 9,999,999.99')
+                return redirect('edit_transaction', pk=pk)
+            
+            if amount.as_tuple().exponent < -2:
+                messages.error(request, 'Amount can have maximum 2 decimal places')
+                return redirect('edit_transaction', pk=pk)
+            
+            # Validate category
+            if not category_id:
+                messages.error(request, 'Please select a category')
+                return redirect('edit_transaction', pk=pk)
+            
+            try:
+                category = Category.objects.get(id=category_id, user=request.user)
+            except Category.DoesNotExist:
+                messages.error(request, 'Selected category does not exist')
+                return redirect('edit_transaction', pk=pk)
+            
+            if category.category_type != transaction_type:
+                messages.error(request, f'Category must be an {transaction_type} category')
+                return redirect('edit_transaction', pk=pk)
+            
+            # Parse date
+            if date_str:
+                try:
+                    date = datetime.fromisoformat(date_str)
+                except:
+                    messages.error(request, 'Invalid date format')
+                    return redirect('edit_transaction', pk=pk)
+            else:
+                date = timezone.now()
+            
+            # Update transaction
+            transaction.amount = amount
+            transaction.category = category
+            transaction.description = description
+            transaction.transaction_type = transaction_type
+            transaction.date = date
+            transaction.save()
+            
+            messages.success(request, 'Transaction updated successfully!')
+            return redirect('transactions_list')
         
-        date_str = request.POST.get('date')
-        if date_str:
-            transaction.date = datetime.fromisoformat(date_str)
-        
-        transaction.save()
-        
-        messages.success(request, 'Transaction updated successfully!')
-        return redirect('transactions_list')
+        except Exception as e:
+            messages.error(request, f'An error occurred: {str(e)}')
+            return redirect('edit_transaction', pk=pk)
     
     categories = Category.objects.filter(user=request.user)
     
@@ -335,20 +448,21 @@ def budgets(request):
     now = timezone.now()
     year = request.GET.get('year', now.year)
     month = request.GET.get('month', now.month)
+    profile = request.user.profile
     
     budgets = Budget.objects.filter(
         user=request.user,
         year=year,
         month=month
     )
-    profile = request.user.profile
+    
     context = {
         'budgets': budgets,
+        'currency': profile.currency,
         'current_month': int(month),
         'current_year': int(year),
         'months': range(1, 13),
         'years': range(now.year - 1, now.year + 2),
-        'currency': profile.currency,
     }
     
     return render(request, 'budgets.html', context)
@@ -448,7 +562,9 @@ def reports(request):
         key=lambda x: x[1],
         reverse=True
     ))
+    
     profile = request.user.profile
+    
     context = {
         'year': year,
         'month': month,
@@ -456,9 +572,9 @@ def reports(request):
         'expenses': float(expenses),
         'net': float(income) - float(expenses),
         'spending_by_category': spending_by_category,
+        'currency': profile.currency,
         'years': range(now.year - 2, now.year + 1),
         'months': range(1, 13),
-        'currency': profile.currency,
     }
     
     return render(request, 'reports.html', context)

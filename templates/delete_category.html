@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Category - Finance Manager{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white text-center py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trash-alt me-2"></i>Delete Category
+                    </h4>
+                </div>
+
+                <div class="card-body p-4 text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-exclamation-circle text-warning display-4 mb-3"></i>
+                        <p class="lead">Are you sure you want to delete <strong>"{{ category.name }}"</strong>?</p>
+                        <p class="text-muted small">
+                            This action cannot be undone. You can only delete categories that have no transactions associated with them.
+                        </p>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{% url 'categories' %}" class="btn btn-outline-secondary px-4">
+                                Keep Category
+                            </a>
+                            
+                            <button type="submit" class="btn btn-danger px-4">
+                                Confirm Delete
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-footer bg-light text-center py-2">
+                    <small class="text-muted">
+                        Category ID: #{{ category.id }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

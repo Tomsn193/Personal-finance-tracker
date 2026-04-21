@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load currency_filters %}
 {% load static %}
 
 {% block title %}Add Transaction - Finance Manager{% endblock %}
@@ -22,7 +21,7 @@
                                 <div class="col-md-6">
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="type" id="expense" 
-                                               value="expense" checked>
+                                               value="expense" checked onchange="updateCategories()">
                                         <label class="form-check-label" for="expense">
                                             <i class="fas fa-arrow-down text-danger"></i> Expense
                                         </label>
@@ -31,7 +30,7 @@
                                 <div class="col-md-6">
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="type" id="income" 
-                                               value="income">
+                                               value="income" onchange="updateCategories()">
                                         <label class="form-check-label" for="income">
                                             <i class="fas fa-arrow-up text-success"></i> Income
                                         </label>
@@ -42,8 +41,16 @@
 
                         <div class="mb-3">
                             <label for="amount" class="form-label fw-bold">Amount</label>
-                            <input type="number" class="form-control form-control-lg" id="amount" 
-                                   name="amount" step="0.01" placeholder="0.00" required>
+                            <input type="number" 
+                                   class="form-control form-control-lg" 
+                                   id="amount" 
+                                   name="amount" 
+                                   step="0.01" 
+                                   min="0.01"
+                                   max="9999999.99"
+                                   placeholder="0.00" 
+                                   required>
+                            <small class="text-muted">Max: 9,999,999.99</small>
                         </div>
 
                         <div class="mb-3">
@@ -59,9 +66,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="description" class="form-label fw-bold">Description</label>
+                            <label for="description" class="form-label fw-bold">Description <span class="text-muted fw-normal">(Optional)</span></label>
                             <input type="text" class="form-control form-control-lg" id="description" 
-                                   name="description" placeholder="What was this transaction for?">
+                                   name="description" placeholder="What was this transaction for? (optional)">
                         </div>
 
                         <div class="mb-3">
@@ -90,44 +97,45 @@ function updateCategories() {
     const categorySelect = document.getElementById('category');
     const allOptions = categorySelect.querySelectorAll('option[data-type]');
     
-    let firstVisible = null;
+    let hasVisibleOption = false;
     
     // Show/hide options based on type
     allOptions.forEach(option => {
         const optionType = option.getAttribute('data-type');
         if (optionType === type) {
             option.style.display = 'block';
-            if (!firstVisible) {
-                firstVisible = option.value;
+            if (!hasVisibleOption) {
+                categorySelect.value = option.value;
+                hasVisibleOption = true;
             }
         } else {
             option.style.display = 'none';
         }
     });
     
-    // Auto-select first visible option
-    if (firstVisible) {
-        categorySelect.value = firstVisible;
-    } else {
+    // If no option was selected, clear it
+    if (!hasVisibleOption) {
         categorySelect.value = '';
     }
 }
 
-// Initialize
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Set date
+    // Set date to now
     const now = new Date();
     const dateInput = document.getElementById('date');
     if (dateInput) {
         dateInput.value = now.toISOString().slice(0, 16);
     }
     
-    // Initialize categories
+    // Initialize categories based on current type selection
     updateCategories();
-    
-    // Add event listeners
-    document.querySelectorAll('input[name="type"]').forEach(radio => {
-        radio.addEventListener('change', updateCategories);
+});
+
+// Update categories when type changes
+document.querySelectorAll('input[name="type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        updateCategories();
     });
 });
 </script>

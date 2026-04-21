@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Settings - Finance Manager{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cog"></i> Settings
+                    </h4>
+                </div>
+                <div class="card-body p-5">
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Currency Settings -->
+                    <div class="mb-5">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-globe text-primary"></i> Currency Preference
+                        </h5>
+                        
+                        <form method="POST" action="{% url 'settings' %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="currency" class="form-label fw-bold">Select Your Currency</label>
+                                <select class="form-select form-select-lg" id="currency" name="currency" required>
+                                    <option value="USD" {% if profile.currency == 'USD' %}selected{% endif %}>USD - US Dollar ($)</option>
+                                    <option value="EUR" {% if profile.currency == 'EUR' %}selected{% endif %}>EUR - Euro (€)</option>
+                                    <option value="GBP" {% if profile.currency == 'GBP' %}selected{% endif %}>GBP - British Pound (£)</option>
+                                    <option value="JPY" {% if profile.currency == 'JPY' %}selected{% endif %}>JPY - Japanese Yen (¥)</option>
+                                    <option value="AUD" {% if profile.currency == 'AUD' %}selected{% endif %}>AUD - Australian Dollar (A$)</option>
+                                    <option value="CAD" {% if profile.currency == 'CAD' %}selected{% endif %}>CAD - Canadian Dollar (C$)</option>
+                                    <option value="CHF" {% if profile.currency == 'CHF' %}selected{% endif %}>CHF - Swiss Franc (CHF)</option>
+                                    <option value="CNY" {% if profile.currency == 'CNY' %}selected{% endif %}>CNY - Chinese Yuan (¥)</option>
+                                    <option value="INR" {% if profile.currency == 'INR' %}selected{% endif %}>INR - Indian Rupee (₹)</option>
+                                    <option value="MXN" {% if profile.currency == 'MXN' %}selected{% endif %}>MXN - Mexican Peso ($)</option>
+                                    <option value="SGD" {% if profile.currency == 'SGD' %}selected{% endif %}>SGD - Singapore Dollar (S$)</option>
+                                    <option value="ZAR" {% if profile.currency == 'ZAR' %}selected{% endif %}>ZAR - South African Rand (R)</option>
+                                    <option value="NGN" {% if profile.currency == 'NGN' %}selected{% endif %}>NGN - Nigerian Naira (₦)</option>
+                                </select>
+                                <small class="text-muted d-block mt-2">
+                                    Current currency: <strong>{{ profile.currency }}</strong>
+                                </small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                        </form>
+                    </div>
+
+                    <hr>
+
+                    <!-- Account Information -->
+                    <div class="mb-5">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-user text-primary"></i> Account Information
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Username</label>
+                                <div class="p-3 bg-light rounded">
+                                    <strong>{{ request.user.username }}</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Email</label>
+                                <div class="p-3 bg-light rounded">
+                                    <strong>{{ request.user.email }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Account Created</label>
+                            <div class="p-3 bg-light rounded">
+                                <strong>{{ request.user.date_joined|date:"F d, Y H:i" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Profile Statistics -->
+                    <div class="mb-5">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-chart-bar text-primary"></i> Profile Statistics
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Total Transactions</h6>
+                                        <h3 class="text-primary">{{ request.user.transactions.count }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Total Categories</h6>
+                                        <h3 class="text-primary">{{ request.user.categories.count }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Active Budgets</h6>
+                                        <h3 class="text-primary">{{ request.user.budgets.count }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Security -->
+                    <div class="mb-5">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-lock text-primary"></i> Security
+                        </h5>
+                        
+                        <p class="text-muted">To change your password, please visit your browser's password manager or contact support.</p>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-lg">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Back to Dashboard -->
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-dismiss alerts after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000);
+        });
+    });
+</script>
+
+{% endblock %}
