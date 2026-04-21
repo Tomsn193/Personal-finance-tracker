@@ -1,4 +1,4 @@
-# 💰 Finance Manager - Personal Finance Management Application
+# Finance Manager - Personal Finance Management Application
 
 A powerful, modern Django-based personal finance management application with a beautiful web interface and REST API.
 
@@ -6,39 +6,39 @@ A powerful, modern Django-based personal finance management application with a b
 
 -----
 
-## 🎯 Features
+## Features
 
-### 💳 Transaction Management
+### Transaction Management
 
 * **Full CRUD:** Create, read, update, and delete transactions.
 * **Categorization:** Organize by Income/Expense with optional descriptions.
 * **Smart Filtering:** Filter by category, type, and date with full input validation.
 
-### 📊 Dashboard & Analytics
+### Dashboard & Analytics
 
 * **Real-time Summaries:** Instant view of income vs. expenses.
 * **Visual Data:** Spending breakdown by category using **Chart.js**.
 * **Flexible Periods:** Toggle between *This Month*, *This Year*, or *All Time*.
 
-### 💰 Budget Management
+### Budget Management
 
 * **Category Limits:** Create monthly budgets per category.
 * **Progress Tracking:** Visual indicators to track spending vs. limits.
 
-### 👤 User Management & Security
+### User Management & Security
 
 * **Data Isolation:** Users only see their own financial data.
 * **Security First:** Features password hashing, CSRF protection, and SQL injection prevention.
 * **Multi-Currency:** Support for 13+ currencies (USD, EUR, GBP, NGN, etc.).
 
-### 📱 REST API
+### REST API
 
 * **30+ Endpoints:** Fully documented API for mobile or third-party integration.
 * **Token Auth:** Secure access via REST Framework tokens.
 
 -----
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```text
 finance_project/
@@ -52,7 +52,7 @@ finance_project/
 
 -----
 
-## 💻 Tech Stack
+## Tech Stack
 
 * **Backend:** Django 6.0, Django REST Framework
 * **Database:** PostgreSQL (Production), SQLite (Development)
@@ -61,7 +61,7 @@ finance_project/
 
 -----
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -120,7 +120,7 @@ This project is configured for deployment on **Render** via `gunicorn`.
 
 -----
 
-## 🔌 API Endpoints (Brief)
+## API Endpoints (Brief)
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
@@ -131,7 +131,7 @@ This project is configured for deployment on **Render** via `gunicorn`.
 
 -----
 
-## 📄 License
+## License
 
 MIT License - Free to use and modify.
 
