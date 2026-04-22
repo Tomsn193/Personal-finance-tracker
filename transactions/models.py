@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from decimal import Decimal
 
 
 class Profile(models.Model):
@@ -106,12 +107,13 @@ class Budget(models.Model):
         total = sum(float(t.amount) for t in transactions)
         return total
     
+
     def get_percentage(self):
         """Get spending percentage of budget"""
         spent = self.get_spent()
         if self.limit == 0:
             return 0
-        return min(100, int((spent / self.limit) * 100))
+        return min(100, int((Decimal(str(spent)) / self.limit) * 100))
     
     def is_over_budget(self):
         """Check if over budget"""
