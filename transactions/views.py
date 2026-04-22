@@ -1,3 +1,6 @@
+from locale import currency
+import profile
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -36,8 +39,14 @@ def register(request):
         # Create user
         user = User.objects.create_user(username=username, email=email, password=password)
         
-        # Create profile with selected currency
-        Profile.objects.create(user=user, currency=currency)
+        # Update profile with selected currency
+        profile, created = Profile.objects.get_or_create(
+            user=user, 
+            defaults={'currency': currency}
+        )
+        if not created:
+            profile.currency = currency
+            profile.save()
         
         # Create default categories
         income_cat = Category.objects.create(
