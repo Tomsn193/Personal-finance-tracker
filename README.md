@@ -2,7 +2,7 @@
 
 A powerful, modern Django-based personal finance management application with a beautiful web interface and REST API.
 
-**[Live Demo on Render](https://www.google.com/search?q=https://your-app-name.onrender.com)** *(Replace with your actual link)*
+**[Live Demo on Render](https://personal-finance-tracker-20mu.onrender.com)**
 
 -----
 
@@ -134,7 +134,3 @@ This project is configured for deployment on **Render** via `gunicorn`.
 ## License
 
 MIT License - Free to use and modify.
-
------
-
-**Developed by [Your Name/Oduone]** | Version 1.0.0 | 🎉
